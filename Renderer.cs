@@ -17,12 +17,16 @@ namespace Intermission
 			int endFrame = 600 * 30000 / 1001;
 
 			Noise noise = new Noise();
+			Fade fade = new FadeOut();
+
+			fade.StartFrame = endFrame - 2 * 30000 / 1001;
+			fade.EndFrame = endFrame;
 
 			for (int frameNumber = startFrame; frameNumber <= endFrame; frameNumber++)
 			{
 				TimeSpan pts = TimeSpan.FromSeconds(frameNumber / (30000.0 / 1001.0));
 
-				var frame = RenderFrame(pts, noise);
+				var frame = RenderFrame(frameNumber, pts, noise, fade);
 
 				frame.Freeze();
 
@@ -30,13 +34,14 @@ namespace Intermission
 			}
 		}
 
-		RenderTargetBitmap RenderFrame(TimeSpan pts, Noise noise)
+		RenderTargetBitmap RenderFrame(int frameNumber, TimeSpan pts, Noise noise, Fade fade)
 		{
 			var target = new RenderTargetBitmap(1280, 720, 96.0, 96.0, PixelFormats.Pbgra32);
 
 			var visual = ComposeVisual(pts);
 
 			visual = noise.ApplyTo(visual);
+			visual = fade.ApplyTo(frameNumber, visual);
 
 			visual.Measure(new Size(1280, 720));
 			visual.Arrange(new Rect(0, 0, 1280, 720));

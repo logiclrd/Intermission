@@ -52,6 +52,9 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Fade.cs" />
+    <Compile Include="FadeIn.cs" />
+    <Compile Include="FadeOut.cs" />
     <Compile Include="Renderer.cs" />
     <Page Include="FancyBottom.xaml">
       <SubType>Designer</SubType>
