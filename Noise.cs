@@ -14,14 +14,71 @@ namespace Intermission
 	{
 		Random _rnd = new Random();
 
+		bool _enableJiggle = true;
 		bool _inJiggle;
 		Point _jiggleBaseOffset;
 		int _jiggleCooldown;
 
+		bool _enableWander = true;
+		double _wanderMagnitude = 0.5;
+		double _wanderX;
+		double _wanderY;
+		double _wanderNextX;
+		double _wanderNextY;
+
+		bool _enableScratches = true;
 		ScratchLine[] _scratchLines = null;
 		double _scratchLineIntensity;
 		double _scratchLineDelta;
 		int _scratchLineCooldown;
+
+		bool _enableDust = true;
+		double _dustLevel = 0.2;
+		double _dustIntensity;
+
+		bool _enableOpacityMask = true;
+
+		public bool EnableJiggle
+		{
+			get { return _enableJiggle; }
+			set { _enableJiggle = value; }
+		}
+
+		public bool EnableWander
+		{
+			get { return _enableWander; }
+			set { _enableWander = value; }
+		}
+
+		public double WanderMagnitude
+		{
+			get { return _wanderMagnitude; }
+			set { _wanderMagnitude = value; }
+		}
+
+		public bool EnableScratches
+		{
+			get { return _enableScratches; }
+			set { _enableScratches = value; }
+		}
+
+		public bool EnableDust
+		{
+			get { return _enableDust; }
+			set { _enableDust = value; }
+		}
+
+		public double DustLevel
+		{
+			get { return _dustLevel; }
+			set { _dustLevel = value; }
+		}
+
+		public bool EnableOpacityMask
+		{
+			get { return _enableOpacityMask; }
+			set { _enableOpacityMask = value; }
+		}
 
 		class ScratchLine
 		{
@@ -40,7 +97,7 @@ namespace Intermission
 
 		public UIElement ApplyTo(UIElement visual)
 		{
-			Canvas effects = new Canvas() { Background = Brushes.Black };
+			Canvas effects = new Canvas();
 
 			effects.Children.Add(visual);
 
@@ -57,7 +114,7 @@ namespace Intermission
 					_inJiggle = false;
 				}
 			}
-			else
+			else if (_enableJiggle)
 			{
 				if (_jiggleCooldown > 0)
 					_jiggleCooldown--;
@@ -69,6 +126,40 @@ namespace Intermission
 						_jiggleBaseOffset = new Point(_rnd.Next(-15, -10), _rnd.Next(-15, -10));
 						_jiggleCooldown = _rnd.Next(3, 20);
 					}
+				}
+			}
+
+			if (_enableWander)
+			{
+				var wanderTransformation = new TranslateTransform();
+
+				wanderTransformation.X = _wanderX;
+				wanderTransformation.Y = _wanderY;
+
+				visual.RenderTransform = wanderTransformation;
+
+				double dx = _wanderNextX - _wanderX;
+				double dy = _wanderNextY - _wanderY;
+
+				double d = Math.Sqrt(dx * dx + dy * dy);
+
+				double step = _wanderMagnitude / 4;
+
+				if (d + _wanderMagnitude * 0.05 < step)
+				{
+					_wanderX = _wanderNextX;
+					_wanderY = _wanderNextY;
+
+					double r = _rnd.NextDouble() * _wanderMagnitude;
+					double a = _rnd.NextDouble() * 2 * Math.PI;
+
+					_wanderNextX = Math.Cos(a) * r;
+					_wanderNextY = Math.Sin(a) * r;
+				}
+				else
+				{
+					_wanderX += dx * step;
+					_wanderY += dy * step;
 				}
 			}
 
@@ -96,7 +187,7 @@ namespace Intermission
 				if (_scratchLines != null)
 					UpdateScratchLines(_scratchLines);
 			}
-			else
+			else if (_enableScratches)
 			{
 				if (_scratchLineCooldown > 0)
 					_scratchLineCooldown--;
@@ -109,7 +200,7 @@ namespace Intermission
 						_scratchLines = Enumerable.Range(0, _rnd.Next(1, 6)).Select((x) =>
 							new ScratchLine()
 							{
-								X = _rnd.Next(-10, 1290),
+								X = _rnd.Next(-10, 1930),
 								DX = (_rnd.NextDouble() - 0.5) * 0.75,
 								Intensity = _rnd.NextDouble() * 0.5 + 0.5,
 							}).ToArray();
@@ -117,12 +208,14 @@ namespace Intermission
 				}
 			}
 
-			effects.Children.Add(CreateDustParticles());
-			effects.OpacityMask = _opacityMask;
+			if (_enableDust)
+				effects.Children.Add(CreateDustParticles());
+
+			if (_enableOpacityMask)
+				effects.OpacityMask = _opacityMask;
 
 			var background = new Grid();
 
-			background.Background = Brushes.Black;
 			background.Children.Add(effects);
 
 			return background;
@@ -151,13 +244,13 @@ namespace Intermission
 
 			figure.StartPoint = new Point(scratchLine.X, 0);
 
-			for (int y = 1; y < 720; y += _rnd.Next(1, 5))
+			for (int y = 1; y < 1080; y += _rnd.Next(1, 5))
 				figure.Segments.Add(new LineSegment() { Point = new Point(scratchLine.X - _rnd.NextDouble() * width * 0.25, y) });
 
-			figure.Segments.Add(new LineSegment() { Point = new Point(scratchLine.X, 720) });
-			figure.Segments.Add(new LineSegment() { Point = new Point(scratchLine.X - width, 720) });
+			figure.Segments.Add(new LineSegment() { Point = new Point(scratchLine.X, 1080) });
+			figure.Segments.Add(new LineSegment() { Point = new Point(scratchLine.X - width, 1080) });
 
-			for (int y = 720 - _rnd.Next(1, 5); y > 0; y -= _rnd.Next(1, 5))
+			for (int y = 1080 - _rnd.Next(1, 5); y > 0; y -= _rnd.Next(1, 5))
 				figure.Segments.Add(new LineSegment() { Point = new Point(scratchLine.X - width + _rnd.NextDouble() * width * 0.25, y) });
 
 			figure.IsClosed = true;
@@ -180,8 +273,10 @@ namespace Intermission
 
 			var geometry = new PathGeometry();
 
-			while (_rnd.NextDouble() < 0.75)
+			while (_rnd.NextDouble() < _dustIntensity)
 				geometry.Figures.Add(CreateDustParticle());
+
+			_dustIntensity = _dustIntensity * _rnd.NextDouble() + _rnd.NextDouble() * _dustLevel;
 
 			output.Data = geometry;
 			output.Fill = new SolidColorBrush(Color.FromArgb((byte)_rnd.Next(192, 256), 15, 10, 0));
@@ -193,10 +288,10 @@ namespace Intermission
 		{
 			var curve = new PolyBezierSegment();
 
-			double centreX = _rnd.NextDouble() * 1280.0;
-			double centreY = _rnd.NextDouble() * 720.0;
+			double centreX = _rnd.NextDouble() * 1920.0;
+			double centreY = _rnd.NextDouble() * 1080.0;
 
-			double baseRadius = _rnd.NextDouble() * 5 + 1.5;
+			double baseRadius = _rnd.NextDouble() * 7.5 + 2.25;
 
 			for (double angle = _rnd.NextDouble(); angle < 6.283185; angle += _rnd.NextDouble())
 			{

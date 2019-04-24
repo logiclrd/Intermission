@@ -4,9 +4,10 @@ using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 using System.Text;
+using System.Windows.Media.Imaging;
 using Intermission;
 
-namespace RawVideo
+namespace PNGFiles
 {
 	class Program
 	{
@@ -18,25 +19,25 @@ namespace RawVideo
 			if (args.Length > 0)
 				Enum.TryParse<RenderMode>(args[0], out mode);
 
-			Console.Error.WriteLine("Render mode: {0}", mode);
-
 			// Trigger initialization of the pack:// URI scheme.
 			new System.Windows.Application();
-
-			var outputStream = Console.OpenStandardOutput();
-
-			byte[] frameBuffer = new byte[1920 * 1080 * 4];
 
 			int frameNumber = 0;
 
 			foreach (var frame in new Renderer() { Mode = mode }.Render())
 			{
-				Console.Error.WriteLine("Delivering frame {0}", frameNumber);
+				Console.Error.WriteLine("Saving frame {0}", frameNumber);
+
+				var encoder = new PngBitmapEncoder();
+
+				encoder.Frames.Add(BitmapFrame.Create(frame));
+
+				using (var outputStream = File.Create("Frame" + frameNumber.ToString("d5") + ".png"))
+					encoder.Save(outputStream);
+
+				GC.Collect();
+
 				frameNumber++;
-
-				frame.CopyPixels(frameBuffer, 1920 * 4, 0);
-
-				outputStream.Write(frameBuffer, 0, frameBuffer.Length);
 			}
 		}
 	}

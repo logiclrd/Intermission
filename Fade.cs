@@ -32,7 +32,6 @@ namespace Intermission
 			{
 				var fader = new Grid();
 
-				fader.Background = Brushes.Black;
 				fader.Children.Add(visual);
 
 				visual.Opacity = opacity;
