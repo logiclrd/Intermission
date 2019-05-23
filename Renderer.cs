@@ -11,29 +11,59 @@ namespace Intermission
 {
 	public class Renderer
 	{
-		RenderMode _mode = RenderMode.DazedAndConfused;
+		RenderMode _mode = RenderMode.Standard;
+		int _startFrame = 1228; // from Lobby.mkv
+		double _ptsAdjustment;
+		double _duration;
 
 		public RenderMode Mode
 		{
 			get { return _mode; }
-			set { _mode = value; }
+			set
+			{
+				_mode = value;
+
+				switch (_mode)
+				{
+					case RenderMode.MontyPython:
+						_ptsAdjustment = 8.69;
+						_duration = 600 + _ptsAdjustment;
+						break;
+					case RenderMode.DazedAndConfused:
+						_duration = 647.960 + _startFrame * 1001d / 30000d;
+						break;
+					case RenderMode.DirectDuration:
+						_startFrame = 0;
+						_duration = 600;
+						break;
+					default:
+						_duration = 600;
+						break;
+				}
+			}
+		}
+
+		public int StartFrame
+		{
+			get { return _startFrame; }
+			set { _startFrame = value; }
+		}
+
+		public double PTSAdjustment
+		{
+			get { return _ptsAdjustment; }
+			set { _ptsAdjustment = value; }
+		}
+
+		public double Duration
+		{
+			get { return _duration; }
+			set { _duration = value; }
 		}
 
 		public IEnumerable<RenderTargetBitmap> Render()
 		{
-			double duration;
-			double ptsAdjustment = 0.0;
-
-			int startFrame = 1228; // from Lobby.mkv
-
-			switch (_mode)
-			{
-				case RenderMode.MontyPython: ptsAdjustment = 8.69; duration = 600 + ptsAdjustment; break;
-				case RenderMode.DazedAndConfused: duration = 647.960 + startFrame * 1001d / 30000d; break;
-				default: duration = 600; break;
-			}
-
-			int endFrame = (int)(duration * 30000 / 1001);
+			int endFrame = (int)(_duration * 30000 / 1001);
 
 			Noise noise = new Noise();
 			Fade fade = new FadeOut();
@@ -53,11 +83,11 @@ namespace Intermission
 			fade.StartFrame = endFrame - 2 * 30000 / 1001;
 			fade.EndFrame = endFrame;
 
-			for (int frameNumber = startFrame; frameNumber <= endFrame; frameNumber++)
+			for (int frameNumber = _startFrame; frameNumber <= endFrame; frameNumber++)
 			{
-				TimeSpan pts = TimeSpan.FromSeconds(frameNumber / (30000.0 / 1001.0) - ptsAdjustment);
+				TimeSpan pts = TimeSpan.FromSeconds(frameNumber / (30000.0 / 1001.0) - _ptsAdjustment);
 
-				var frame = RenderFrame(frameNumber, pts, duration, noise, fade);
+				var frame = RenderFrame(frameNumber, pts, _duration, noise, fade);
 
 				frame.Freeze();
 

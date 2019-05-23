@@ -20,6 +20,13 @@ namespace RawVideo
 
 			Console.Error.WriteLine("Render mode: {0}", mode);
 
+			var renderer = new Renderer() { Mode = mode };
+
+			if (args.Length > 1)
+				renderer.Duration = double.Parse(args[1]);
+
+			Console.Error.WriteLine("Duration: {0}", TimeSpan.FromSeconds(renderer.Duration));
+
 			// Trigger initialization of the pack:// URI scheme.
 			new System.Windows.Application();
 
@@ -29,7 +36,7 @@ namespace RawVideo
 
 			int frameNumber = 0;
 
-			foreach (var frame in new Renderer() { Mode = mode }.Render())
+			foreach (var frame in renderer.Render())
 			{
 				Console.Error.WriteLine("Delivering frame {0}", frameNumber);
 				frameNumber++;

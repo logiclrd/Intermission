@@ -5,5 +5,6 @@
 		Standard,
 		MontyPython,
 		DazedAndConfused,
+		DirectDuration,
 	}
 }
